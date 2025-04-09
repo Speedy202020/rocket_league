@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@date-io/luxon": "^3.0.0",
+    "@supabase/supabase-js": "^2.49.4",
     "axios": "^1.7.4",
     "core-js": "^3.38.1",
     "luxon": "^3.5.0",
