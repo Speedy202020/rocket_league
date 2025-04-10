@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import { createClient } from "@supabase/supabase-js";
 
 export const useMainStore = defineStore('mainStore', () => {
@@ -33,7 +33,7 @@ export const useMainStore = defineStore('mainStore', () => {
         return supabase
             .from('shots')
             .select('*')
-            .neq('user', username)
+            // .neq('user', username)
             .then(({ data, error }) => {
                 if (error) {
                     throw error
@@ -75,7 +75,7 @@ export const useMainStore = defineStore('mainStore', () => {
                 const username = discord.value.user_metadata.full_name;
 
                 checkUserInShots(username)
-                    .then((data) => {
+                    .then(data => {
                         if (data) {
                             user.value = data
                         } else {
@@ -129,6 +129,33 @@ export const useMainStore = defineStore('mainStore', () => {
             .eq('user', user.value.user)
             .select()
     }
+
+    onMounted(() => {
+        const channel = supabase
+            .channel('shots-updates')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'shots',
+                },
+                (payload) => {
+                    const updatedPlayer = payload.new;
+                    const index = opponents.value.findIndex(p => p.user === updatedPlayer.user);
+                    if (index !== -1) {
+                        opponents.value[index] = updatedPlayer;
+                    } else {
+                        opponents.value.push(updatedPlayer);
+                    }
+                }
+            )
+            .subscribe();
+
+        onBeforeUnmount(() => {
+            supabase.removeChannel(channel);
+        });
+    });
 
     return { shots, user, opponents, discord, loading, discordLogin, discordLogout, addShot };
 });
