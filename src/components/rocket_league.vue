@@ -24,7 +24,7 @@ const { user, shots, opponents } = storeToRefs(mainStore);
   <v-card variant="text" class="mx-auto">
     <v-data-table hide-default-header hide-default-footer :items="opponents" :headers="[{
       title: 'Player',
-      value: 'user'
+      value: 'username'
     }, {
       title: 'Shots', key: 'hitted', value: item => `${item.hitted.length} / ${shots.length}`
     }]"></v-data-table>

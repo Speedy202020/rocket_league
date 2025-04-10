@@ -15,11 +15,11 @@ export const useMainStore = defineStore('mainStore', () => {
         '170+',
     ]);
 
-    const checkUserInShots = async (username) => {
+    const checkUserInShots = async () => {
         return supabase
-            .from('shots')
+            .from('shots_with_user')
             .select('*')
-            .eq('user', username)
+            .eq('user_id', discord.value.user.id)
             .limit(1)
             .then(({ data, error }) => {
                 if (error) {
@@ -29,15 +29,16 @@ export const useMainStore = defineStore('mainStore', () => {
             })
     };
 
-    const getOpponents = async (username) => {
+    const getOpponents = async () => {
         return supabase
-            .from('shots')
+            .from('shots_with_user')
             .select('*')
-            // .neq('user', username)
+            // .neq('user_id', discord.value.user.id)
             .then(({ data, error }) => {
                 if (error) {
                     throw error
                 }
+                console.log('data', data)
                 return data
             })
     };
@@ -45,11 +46,9 @@ export const useMainStore = defineStore('mainStore', () => {
     const createUserInShots = async (username) => {
         return supabase
             .from('shots')
-            .insert([{ user: username, hitted: [] }])
+            .insert([{ hitted: [], user_id: discord.value.user.id }])
             .select()
             .then(({ data, error }) => {
-                console.log('data in fn', data)
-                console.log('error in fn', error)
                 if (error) {
                     throw error
                 }
@@ -67,25 +66,32 @@ export const useMainStore = defineStore('mainStore', () => {
         await supabase.auth.signOut();
     };
 
+    async function addShot() {
+        return supabase
+            .from('shots')
+            .update([{ hitted: user.value.hitted }])
+            .eq('user_id', discord.value.user.id)
+            .select()
+    }
+
     supabase.auth.onAuthStateChange(async (event, session) => {
         console.log('!!!!EVENT', event)
         switch (event) {
             case 'SIGNED_IN':
-                discord.value = session.user;
-                const username = discord.value.user_metadata.full_name;
+                discord.value = session;
 
-                checkUserInShots(username)
+                checkUserInShots()
                     .then(data => {
                         if (data) {
                             user.value = data
                         } else {
-                            return createUserInShots(username)
+                            return createUserInShots()
                                 .then(data => {
                                     user.value = data
                                 })
                         }
 
-                        return getOpponents(username)
+                        return getOpponents()
                             .then(data => {
                                 opponents.value = data
                             })
@@ -121,14 +127,6 @@ export const useMainStore = defineStore('mainStore', () => {
                 break;
         }
     });
-
-    async function addShot() {
-        return supabase
-            .from('shots')
-            .update([{ hitted: user.value.hitted }])
-            .eq('user', user.value.user)
-            .select()
-    }
 
     onMounted(() => {
         const channel = supabase

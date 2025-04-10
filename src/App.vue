@@ -45,9 +45,9 @@ watch(loading, (newLoading) => {
       <v-spacer></v-spacer>
 
       <div v-if="discord" class="d-flex align-center ga-2 pr-2">
-        <v-avatar size="32" :image="discord.user_metadata.avatar_url" />
+        <v-avatar size="32" :image="user.picture" />
         <span class="font-weight-medium text-truncate" style="max-width: 120px;">
-          {{ discord.user_metadata.custom_claims.global_name ?? discord.user_metadata.full_name }}
+          {{ user.username }}
         </span>
       </div>
     </v-app-bar>
